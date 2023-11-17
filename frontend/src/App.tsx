@@ -1,35 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import {ChangeEvent, FormEvent, useState} from "react";
+import axios from "axios";
 
 function App() {
-  const [count, setCount] = useState(0)
+    const [file, setFile] = useState<File | null>(null);
+    const [isUploaded, setIsUploaded] = useState<boolean>(false);
+    const [url, setUrl] = useState<string>("");
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    function handleChangeFile(event: ChangeEvent<HTMLInputElement>) {
+        if (!event.target.files) {
+            return;
+        } else {
+            setFile(event.target.files[0])
+        }
+    }
+
+    function uploadFile(event: FormEvent<HTMLFormElement>){
+        event.preventDefault();
+        const formData = new FormData();
+        formData.append("file", file!)
+        axios.post("/api/upload/image", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            }
+        })
+            .then((r) => {
+                setIsUploaded(true);
+                setUrl(r.data);
+            })
+            .catch((e) => setUrl(e));
+    }
+
+    return (
+        <form onSubmit={uploadFile}>
+            <input type="file" onChange={handleChangeFile}/>
+            <button type="submit">Upload file</button>
+            {
+                isUploaded && url
+            }
+        </form>
+    )
 }
 
 export default App
